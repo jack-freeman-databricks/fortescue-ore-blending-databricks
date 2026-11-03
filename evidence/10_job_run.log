@@ -1,0 +1,47 @@
+Run URL: https://fevm-serverless-stable-1s8h43.cloud.databricks.com/jobs/1002458748598789/runs/735839587042583?o=7474655787821037
+
+2026-11-03 21:19:50 "[dev jack_freeman] fmg-ore-blending-score-and-recommend" RUNNING
+2026-11-03 21:26:18 "[dev jack_freeman] fmg-ore-blending-score-and-recommend" TERMINATED SUCCESS
+Output:
+=======
+Task score_and_recommend:
+Downloading artifacts:   0%|          | 0/7 [00:00<?, ?it/s]
+
+2026/11/03 13:22:54 WARNING mlflow.pyfunc: The version of CloudPickle that was used to save the model, `CloudPickle 3.1.2`, differs from the version of CloudPickle that is currently running, `CloudPickle 3.0.0`, and may be incompatible
+
+
+Loaded champion version 4
+
+
+2026/11/03 13:23:09 WARNING mlflow.models.utils: Found extra inputs in the model input that are not defined in the model signature: `['hub_bm_bias_loi', 'lab_fe', 'lab_al2o3', 'lab_p', 'lab_loi', 'hub_xba_bias_p', 'wet_tonnes', 'lab_sio2', 'wagons', 'train_id', 'has_lab', 'load_start', 'tlo_id', 'hub_xba_bias_loi', 'result_ts', 'lab_status', 'depart_ts', 'hub_bm_bias_p']`. These inputs will be ignored.
+
+
+1354 trains scored; 23 in flight awaiting lab; 6 with lab rejected by QA/QC
+
+
+2026/11/03 13:23:19 WARNING mlflow.models.utils: Found extra inputs in the model input that are not defined in the model signature: `['hub_bm_bias_loi', 'lab_fe', 'lab_al2o3', 'lab_p', 'lab_loi', 'hub_xba_bias_p', 'wet_tonnes', 'lab_sio2', 'wagons', 'train_id', 'has_lab', 'load_start', 'tlo_id', 'hub_xba_bias_loi', 'result_ts', 'lab_status', 'depart_ts', 'hub_bm_bias_p']`. These inputs will be ignored.
+
+
+T001360 SOL/KF pred Fe 56.18 (block model says 56.61)
+  -> Reclaim 13,600 tonnes from SOL-ROM-04 and 20,900 tonnes from SOL-ROM-05 to make typical KF grade at 56.18% iron. This blend meets spec with minimal giveaway and the optimiser confirms it's the best available combination.
+
+T001356 CC/FB pred Fe 58.18 (block model says 58.27)
+  -> Reclaim 7,700 tonnes from CC-ROM-01, 24,200 tonnes from CC-ROM-03, and 2,600 tonnes from CC-ROM-05 to make FB product at 58.18% Fe. This blend meets the 58.0% typical specification with minimal giveaway while optimally using available CC hub stockpiles.
+
+T001352 CB/FB pred Fe 58.18 (block model says 58.41)
+  -> Reclaim 15,400 tonnes from CB-ROM-01 and 19,100 tonnes from CB-ROM-03 to make FB product at 58.18% iron, which meets the 58.0% target with minimal giveaway. The optimiser found the best blend using reconciled grades that account for model bias.
+
+T001364 ELI/FB pred Fe 58.18 (block model says 58.37)
+  -> Reclaim 17,800 tonnes from ELI-ROM-03 and 16,700 tonnes from ELI-ROM-05 to make typical FB grade at 58.18% Fe. This blend minimizes giveaway while meeting spec with safe margin.
+
+
+=======
+Task sync_decisions:
+Lakebase host: ep-green-pond-d2203vka.database.us-east-1.cloud.databricks.com | as: jack.freeman@databricks.com
+2 decisions, 1 stockpile availability rows in Lakebase
+lb_stockpile_grade_current: state=SyncedTableState.SYNCED_TABLE_ONLINE_NO_PENDING_UPDATE -> refresh update 26144aca-45e8-49f8-b443-64b370731525
+lb_train_grade_predictions: state=SyncedTableState.SYNCED_TABLE_ONLINE_NO_PENDING_UPDATE -> refresh update a113f317-b385-4412-a4ff-e4dc0efdd0bb
+lb_blend_recommendations: state=SyncedTableState.SYNCED_TABLE_ONLINE_NO_PENDING_UPDATE -> refresh update fd0eb90f-3c4b-4ac5-8b52-e5e16a77dc10
+lb_blend_recommendation_lines: state=SyncedTableState.SYNCED_TABLE_ONLINE_NO_PENDING_UPDATE -> refresh update c3f3e8e6-2c0c-4281-ae66-cf21c873f9b7
+
+exit 0

@@ -1,0 +1,8 @@
+command: ["python", "-m", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+env:
+  - name: LAKEBASE_ENDPOINT
+    value: "projects/fmg-ore-blending/branches/production/endpoints/primary"
+  - name: SYNC_SCHEMA
+    value: "fmg_ore_blending"
+  - name: GENIE_SPACE_ID
+    value: "01f1d784cd381d9a847bfae03a44cfbf"

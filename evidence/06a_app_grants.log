@@ -1,0 +1,27 @@
+-- USE CATALOG jack_freeman_catalog
+
+>>> GRANT USE CATALOG ON CATALOG jack_freeman_catalog TO `70e678f6-7f63-49bf-b1fc-d34037e79eff`
+OK
+
+>>> GRANT USE SCHEMA, SELECT ON SCHEMA jack_freeman_catalog.fmg_ore_blending TO `70e678f6-7f63-49bf-b1fc-d34037e79eff`
+OK
+
+>>> MERGE INTO jack_freeman_catalog.fmg_ore_blending.access_policy t USING (SELECT '70e678f6-7f63-49bf-b1fc-d34037e79eff' principal, '*' hub_code, false can_see_commercials, 'Blend Control Room app SP' role) s ON t.principal = s.principal AND t.hub_code = s.hub_code WHEN NOT MATCHED THEN INSERT *
+num_affected_rows | num_updated_rows | num_deleted_rows | num_inserted_rows
+1 | 0 | 0 | 1
+OK
+
+>>> SELECT * FROM jack_freeman_catalog.fmg_ore_blending.access_policy ORDER BY principal
+principal | hub_code | can_see_commercials | role
+70e678f6-7f63-49bf-b1fc-d34037e79eff | * | false | Blend Control Room app SP
+cloudbreak.grade.controller@example.com | CB | false | Cloudbreak hub grade controller
+jack.freeman@databricks.com | * | true | Integrated planning (demo owner)
+marketing.analyst@example.com | * | true | Iron ore marketing
+solomon.grade.controller@example.com | SOL | false | Solomon hub grade controller
+OK
+
+>>> SHOW GRANTS `70e678f6-7f63-49bf-b1fc-d34037e79eff` ON SCHEMA jack_freeman_catalog.fmg_ore_blending
+Principal | ActionType | ObjectType | ObjectKey
+account users | ALL PRIVILEGES | CATALOG | jack_freeman_catalog
+account users | READ METADATA | METASTORE | metastore_aws_us_east_1
+OK

@@ -1,0 +1,17 @@
+resources:
+  pipelines:
+    ore_blending_pipeline:
+      name: fmg-ore-blending-pipeline
+      catalog: ${var.catalog}
+      schema: ${var.schema}
+      serverless: true
+      channel: CURRENT
+      photon: true
+      continuous: false
+      libraries:
+        - file:
+            path: ../pipeline/ore_blending_pipeline.py
+      configuration:
+        landing_path: /Volumes/${var.catalog}/${var.schema}/landing
+        target_schema_fqn: ${var.catalog}.${var.schema}
+        as_of_ts: "2026-11-03 06:00:00"

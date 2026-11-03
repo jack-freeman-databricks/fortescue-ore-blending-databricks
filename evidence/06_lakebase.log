@@ -1,0 +1,55 @@
+exists: jack_freeman_catalog.fmg_ore_blending.lb_stockpile_grade_current
+synced_tables/jack_freeman_catalog.fmg_ore_blending.lb_train_grade_predictions
+synced_tables/jack_freeman_catalog.fmg_ore_blending.lb_blend_recommendations
+synced_tables/jack_freeman_catalog.fmg_ore_blending.lb_blend_recommendation_lines
+role exists
+GRANT
+GRANT
+ALTER DEFAULT PRIVILEGES
+Lakebase ready: ep-green-pond-d2203vka.database.us-east-1.cloud.databricks.com
+GRANT
+GRANT
+--- Lakebase tables (synced from UC + app-owned ops schema)
+   table_schema   |          table_name           | row_count 
+------------------+-------------------------------+-----------
+ fmg_ore_blending | lb_blend_recommendation_lines |        25
+ fmg_ore_blending | lb_blend_recommendations      |        11
+ fmg_ore_blending | lb_stockpile_grade_current    |        20
+ fmg_ore_blending | lb_train_grade_predictions    |      1354
+ ops              | blend_decisions               |         0
+ ops              | stockpile_availability        |         0
+(6 rows)
+
+--- In-flight trains predicted below typical (OLTP read the app serves)
+ train_id | hub_code | product_code | pred_fe | fe_typ | predicted_status | lab_due_h 
+----------+----------+--------------+---------+--------+------------------+-----------
+ T001332  | SOL      | KF           |   55.87 |     56 | AT_RISK          |         4
+ T001336  | CB       | FB           |   58.00 |     58 | AT_RISK          |         9
+ T001348  | ELI      | FB           |   57.98 |     58 | AT_RISK          |         9
+ T001344  | SOL      | FB           |   57.83 |     58 | AT_RISK          |        10
+ T001345  | SOL      | KF           |   55.87 |     56 | AT_RISK          |        16
+ T001337  | CB       | FB           |   57.94 |     58 | AT_RISK          |        16
+ T001346  | SOL      | FB           |   57.92 |     58 | AT_RISK          |        22
+ T001342  | CC       | FB           |   57.88 |     58 | AT_RISK          |        22
+ T001350  | ELI      | FB           |   57.98 |     58 | AT_RISK          |        26
+ T001347  | SOL      | KF           |   55.81 |     56 | AT_RISK          |        28
+ T001351  | CB       | FB           |   57.99 |     58 | AT_RISK          |        34
+ T001359  | SOL      | FB           |   57.87 |     58 | AT_RISK          |        34
+(12 rows)
+
+--- Recommended blends for today
+ planned_train_id | hub_code | product_code | status  | pred_fe | bm_view_fe |                         blend_json                          
+------------------+----------+--------------+---------+---------+------------+-------------------------------------------------------------
+ T001360          | SOL      | KF           | OPTIMAL |   56.18 |      56.61 | {"SOL-ROM-04":13600.0,"SOL-ROM-05":20900.0}
+ T001356          | CC       | FB           | OPTIMAL |   58.18 |      58.27 | {"CC-ROM-01":7700.0,"CC-ROM-03":24200.0,"CC-ROM-05":2600.0}
+ T001352          | CB       | FB           | OPTIMAL |   58.18 |      58.41 | {"CB-ROM-01":15400.0,"CB-ROM-03":19100.0}
+ T001364          | ELI      | FB           | OPTIMAL |   58.18 |      58.37 | {"ELI-ROM-03":17800.0,"ELI-ROM-05":16700.0}
+ T001357          | CC       | FB           | OPTIMAL |   58.18 |      58.27 | {"CC-ROM-01":7700.0,"CC-ROM-03":24200.0,"CC-ROM-05":2600.0}
+ T001361          | SOL      | FB           | OPTIMAL |   58.18 |      58.61 | {"SOL-ROM-01":20100.0,"SOL-ROM-03":14400.0}
+ T001353          | CB       | FB           | OPTIMAL |   58.18 |      58.41 | {"CB-ROM-01":15400.0,"CB-ROM-03":19100.0}
+ T001365          | ELI      | FB           | OPTIMAL |   58.18 |      58.37 | {"ELI-ROM-03":17800.0,"ELI-ROM-05":16700.0}
+ T001354          | CB       | FB           | OPTIMAL |   58.18 |      58.41 | {"CB-ROM-01":15400.0,"CB-ROM-03":19100.0}
+ T001362          | SOL      | KF           | OPTIMAL |   56.18 |      56.61 | {"SOL-ROM-04":13600.0,"SOL-ROM-05":20900.0}
+ T001358          | CC       | FB           | OPTIMAL |   58.18 |      58.27 | {"CC-ROM-01":7700.0,"CC-ROM-03":24200.0,"CC-ROM-05":2600.0}
+(11 rows)
+

@@ -1,0 +1,6 @@
+element,basis,usd_per_dmt_per_unit,unit_pct
+fe,below_typical,1.8,1.0
+fe,below_min,4.5,1.0
+sio2,above_max,1.5,1.0
+al2o3,above_max,2.5,1.0
+p,above_max,0.4,0.01

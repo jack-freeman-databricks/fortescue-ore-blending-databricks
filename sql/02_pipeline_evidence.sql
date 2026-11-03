@@ -1,0 +1,12 @@
+USE CATALOG jack_freeman_catalog;
+USE SCHEMA fmg_ore_blending;
+-- Row counts per layer
+SELECT 'bronze_haul_cycles' t, count(*) n FROM bronze_haul_cycles UNION ALL SELECT 'silver_haul_cycles', count(*) FROM silver_haul_cycles UNION ALL SELECT 'bronze_xba_readings', count(*) FROM bronze_xba_readings UNION ALL SELECT 'silver_xba_readings', count(*) FROM silver_xba_readings UNION ALL SELECT 'bronze_lims_assays', count(*) FROM bronze_lims_assays UNION ALL SELECT 'silver_lab_assays', count(*) FROM silver_lab_assays UNION ALL SELECT 'silver_trains', count(*) FROM silver_trains UNION ALL SELECT 'train_features', count(*) FROM train_features UNION ALL SELECT 'train_performance', count(*) FROM train_performance UNION ALL SELECT 'vessel_compliance', count(*) FROM vessel_compliance UNION ALL SELECT 'stockpile_grade_current', count(*) FROM stockpile_grade_current UNION ALL SELECT 'silver_train_plan', count(*) FROM silver_train_plan;
+-- Data quality expectation results from the pipeline event log (latest update)
+SELECT details:flow_progress:metrics:num_output_rows::bigint AS output_rows, origin.flow_name AS flow, e.name AS expectation, e.passed_records, e.failed_records FROM (SELECT origin, details, explode(from_json(details:flow_progress:data_quality:expectations, 'array<struct<name:string,dataset:string,passed_records:bigint,failed_records:bigint>>')) e FROM event_log(TABLE(silver_haul_cycles)) WHERE event_type = 'flow_progress' AND details:flow_progress:data_quality IS NOT NULL) ORDER BY flow, expectation;
+-- Train performance by hub (the business problem)
+SELECT hub_code, product_code, count(*) trains, round(avg(lab_fe),2) avg_lab_fe, round(avg(fe_typ),2) fe_typical, round(avg(CAST(below_typical_fe AS INT))*100,1) pct_below_typical, round(avg(bm_fe_error),2) avg_block_model_fe_error, round(avg(xba_fe_error),2) avg_analyser_fe_error, sum(CASE WHEN lab_status='AWAITING_LAB' THEN 1 ELSE 0 END) awaiting_lab FROM train_performance GROUP BY ALL ORDER BY 1,2;
+-- Vessel compliance and illustrative penalties (masked column visible to entitled user)
+SELECT product_code, count(*) vessels, round(sum(dry_tonnes)/1e6,2) dry_mt, sum(CAST(below_typical AS INT)) vessels_below_typical, round(sum(penalty_usd)/1e6,2) penalty_usd_m, round(avg(fe),2) avg_fe FROM vessel_compliance GROUP BY ALL;
+-- Stockpile state (lab-reconciled vs block model)
+SELECT stockpile_id, grade_class, product_code, round(tonnes_on_hand/1000,0) kt_on_hand, bm_fe, recon_fe, hub_bm_bias_fe, recon_trains FROM stockpile_grade_current ORDER BY stockpile_id;

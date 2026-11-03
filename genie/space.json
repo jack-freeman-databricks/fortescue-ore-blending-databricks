@@ -1,0 +1,153 @@
+{
+  "version": 2,
+  "config": {
+    "sample_questions": [
+      {
+        "id": "10000000000000000000000000000001",
+        "question": [
+          "Which hub had the highest share of trains below typical Fe in October?"
+        ]
+      },
+      {
+        "id": "10000000000000000000000000000002",
+        "question": [
+          "What is the average block model Fe error by hub over the last 30 days?"
+        ]
+      },
+      {
+        "id": "10000000000000000000000000000003",
+        "question": [
+          "Show vessels loaded in October with Fe below typical and their penalty"
+        ]
+      },
+      {
+        "id": "10000000000000000000000000000004",
+        "question": [
+          "How many trains are predicted off-spec right now?"
+        ]
+      },
+      {
+        "id": "10000000000000000000000000000005",
+        "question": [
+          "Which stockpiles have the biggest gap between block model and reconciled Fe?"
+        ]
+      },
+      {
+        "id": "10000000000000000000000000000006",
+        "question": [
+          "What blend is recommended for the next Solomon train and why?"
+        ]
+      }
+    ]
+  },
+  "data_sources": {
+    "tables": [
+      {
+        "identifier": "jack_freeman_catalog.fmg_ore_blending.blend_compliance_mv"
+      },
+      {
+        "identifier": "jack_freeman_catalog.fmg_ore_blending.blend_recommendations"
+      },
+      {
+        "identifier": "jack_freeman_catalog.fmg_ore_blending.stockpile_grade_current"
+      },
+      {
+        "identifier": "jack_freeman_catalog.fmg_ore_blending.train_grade_predictions"
+      },
+      {
+        "identifier": "jack_freeman_catalog.fmg_ore_blending.train_performance"
+      },
+      {
+        "identifier": "jack_freeman_catalog.fmg_ore_blending.value_backtest"
+      },
+      {
+        "identifier": "jack_freeman_catalog.fmg_ore_blending.vessel_compliance"
+      },
+      {
+        "identifier": "jack_freeman_catalog.fmg_ore_blending.vessel_compliance_mv"
+      }
+    ]
+  },
+  "instructions": {
+    "text_instructions": [
+      {
+        "id": "30000000000000000000000000000001",
+        "content": [
+          "You are the grade-control analyst for Fortescue's mine-to-port supply chain (Pilbara, Western Australia).\n",
+          "Ore is trucked to ROM stockpiles at 4 mine hubs: CB=Cloudbreak, CC=Christmas Creek, SOL=Solomon, ELI=Eliwana. Trains (~34.5 kt wet) are loaded at each hub's train load-out (TLO) and railed to Herb Elliott Port, where trains are blended into vessel cargoes.\n",
+          "Products: FB = Fortescue Blend (typical Fe 58.0%, min 57.5%), KF = Kings Fines (typical Fe 56.0%, min 55.5%). Specs and penalties are illustrative.\n",
+          "\n",
+          "PREFER THE METRIC VIEWS for KPIs. Query them with MEASURE(`Measure Name`) and GROUP BY the named dimensions, e.g.\n",
+          "SELECT `Hub`, MEASURE(`Pct Trains Below Typical Fe`) FROM jack_freeman_catalog.fmg_ore_blending.blend_compliance_mv GROUP BY ALL.\n",
+          "- blend_compliance_mv: train-level compliance (only trains whose lab assay has returned).\n",
+          "- vessel_compliance_mv: vessel cargo compliance and illustrative grade penalty USD.\n",
+          "\n",
+          "Detail tables:\n",
+          "- train_performance: one row per train. lab_fe = lab assay Fe % (truth, arrives 24-48 h after departure), bm_fe = block-model Fe of the reclaimed stockpiles, xba_fe = cross-belt analyser Fe. bm_fe_error = bm_fe - lab_fe (positive = block model over-states iron). below_typical_fe / limit_breach flags. lab_status AWAITING_LAB means lab not back yet.\n",
+          "- train_grade_predictions: ML model (train_grade_predictor@champion) prediction of lab grade at departure. pred_fe, pred_fe_band (90% error band), predicted_status ON_SPEC / AT_RISK / OFF_SPEC_LIKELY. in_flight = true for trains that have left the load-out and are awaiting lab: use it for \"right now\" questions. lab_status QAQC_REJECTED = lab result failed QA/QC.\n",
+          "- blend_recommendations: today's planned trains with the optimiser's recommended reclaim blend (blend_json = tonnes by stockpile), pred_fe (lab-reconciled), bm_view_fe (what the raw block model would show), rationale (AI-written).\n",
+          "- stockpile_grade_current: each ROM stockpile now: tonnes_on_hand, bm_fe (block model), recon_fe (lab-reconciled), hub_bm_bias_fe.\n",
+          "- vessel_compliance: one row per vessel; penalty_usd may be NULL for users without commercial entitlement (column mask), so say so if it is NULL.\n",
+          "- value_backtest: simulated 30-day comparison of block-model targeting vs reconciled-grade targeting.\n",
+          "\n",
+          "Always show hub names, not codes. Round grades to 2 decimals and tonnes to whole numbers or kt. \"Last month\" = the latest full calendar month in the data (data runs 2026-08-05 to 2026-11-03). Dates are AWST.\n"
+        ]
+      }
+    ],
+    "example_question_sqls": [
+      {
+        "id": "20000000000000000000000000000001",
+        "question": [
+          "Which hub had the highest share of trains below typical Fe last month?"
+        ],
+        "sql": [
+          "SELECT `Hub`, MEASURE(`Trains`) AS trains, ROUND(MEASURE(`Pct Trains Below Typical Fe`), 1) AS pct_below_typical\n",
+          "FROM jack_freeman_catalog.fmg_ore_blending.blend_compliance_mv\n",
+          "WHERE `Departure Month` = DATE'2026-10-01'\n",
+          "GROUP BY ALL\n",
+          "ORDER BY pct_below_typical DESC\n"
+        ]
+      },
+      {
+        "id": "20000000000000000000000000000002",
+        "question": [
+          "What is the block model Fe bias by hub?"
+        ],
+        "sql": [
+          "SELECT `Hub`, ROUND(MEASURE(`Block Model Fe Bias`), 3) AS bm_fe_bias, ROUND(MEASURE(`Block Model Fe MAE`), 3) AS bm_fe_mae,\n",
+          "       ROUND(MEASURE(`Analyser Fe MAE`), 3) AS analyser_fe_mae\n",
+          "FROM jack_freeman_catalog.fmg_ore_blending.blend_compliance_mv\n",
+          "GROUP BY ALL\n",
+          "ORDER BY bm_fe_bias DESC\n"
+        ]
+      },
+      {
+        "id": "20000000000000000000000000000003",
+        "question": [
+          "How many in-flight trains are predicted off-spec?"
+        ],
+        "sql": [
+          "SELECT CASE hub_code WHEN 'CB' THEN 'Cloudbreak' WHEN 'CC' THEN 'Christmas Creek' WHEN 'SOL' THEN 'Solomon' WHEN 'ELI' THEN 'Eliwana' END AS hub,\n",
+          "       predicted_status, COUNT(*) AS trains, ROUND(AVG(pred_fe), 2) AS avg_predicted_fe\n",
+          "FROM jack_freeman_catalog.fmg_ore_blending.train_grade_predictions\n",
+          "WHERE in_flight\n",
+          "GROUP BY ALL\n",
+          "ORDER BY hub, predicted_status\n"
+        ]
+      },
+      {
+        "id": "20000000000000000000000000000004",
+        "question": [
+          "What is the monthly grade penalty by product?"
+        ],
+        "sql": [
+          "SELECT `Product`, `Load Month`, MEASURE(`Vessels`) AS vessels, MEASURE(`Vessels Below Typical Fe`) AS vessels_below_typical,\n",
+          "       ROUND(MEASURE(`Grade Penalty USD`), 0) AS penalty_usd\n",
+          "FROM jack_freeman_catalog.fmg_ore_blending.vessel_compliance_mv\n",
+          "GROUP BY ALL\n",
+          "ORDER BY `Product`, `Load Month`\n"
+        ]
+      }
+    ]
+  }
+}

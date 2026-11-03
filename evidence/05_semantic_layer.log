@@ -1,0 +1,138 @@
+-- USE CATALOG jack_freeman_catalog
+-- USE SCHEMA fmg_ore_blending
+
+>>> CREATE OR REPLACE VIEW blend_compliance_mv
+WITH METRICS LANGUAGE YAML
+COMMENT 'Certified train grade-compliance KPIs (Fortescue mine-to-port). Source: Lakeflow gold train_performance (row-filtered by hub).'
+AS $$
+version: 1.1
+source: jack_freeman_catalog.fmg_ore_blending.train_performance
+filter: lab_status = 'RETURNED'
+dimensions:
+  - name: Hub
+    expr: CASE hub_code WHEN 'CB' THEN 'Cloudbreak' WHEN 'CC' THEN 'Christmas Creek' WHEN 'SOL' THEN 'Solomon' WHEN 'ELI' THEN 'Eliwana' END
+    comment: Mine hub / train load-out
+  - name: Hub Code
+    expr: hub_code
+  - name: Product
+    expr: CASE product_code WHEN 'FB' THEN 'Fortescue Blend' WHEN 'KF' THEN 'Kings Fines' END
+  - name: Departure Date
+    expr: depart_date
+  - name: Departure Week
+    expr: DATE_TRUNC('WEEK', depart_date)
+  - name: Departure Month
+    expr: DATE_TRUNC('MONTH', depart_date)
+measures:
+  - name: Trains
+    expr: COUNT(1)
+  - name: Dry Tonnes
+    expr: SUM(dry_tonnes)
+  - name: Avg Lab Fe Pct
+    expr: SUM(lab_fe * dry_tonnes) / SUM(dry_tonnes)
+    comment: Tonnage-weighted lab Fe %
+  - name: Avg Fe vs Typical
+    expr: SUM(fe_vs_typical * dry_tonnes) / SUM(dry_tonnes)
+    comment: Tonnage-weighted lab Fe minus product typical Fe (negative = iron shortfall)
+  - name: Pct Trains Below Typical Fe
+    expr: AVG(CASE WHEN below_typical_fe THEN 1.0 ELSE 0.0 END) * 100
+  - name: Trains Below Typical Fe
+    expr: SUM(CASE WHEN below_typical_fe THEN 1 ELSE 0 END)
+  - name: Trains Breaching Limits
+    expr: SUM(CASE WHEN limit_breach THEN 1 ELSE 0 END)
+    comment: Trains below min Fe or above max SiO2/Al2O3/P
+  - name: Block Model Fe Bias
+    expr: AVG(bm_fe_error)
+    comment: Block-model Fe minus lab Fe (positive = block model over-states iron)
+  - name: Block Model Fe MAE
+    expr: AVG(ABS(bm_fe_error))
+  - name: Analyser Fe MAE
+    expr: AVG(ABS(xba_fe_error))
+$$
+result
+OK
+
+>>> CREATE OR REPLACE VIEW vessel_compliance_mv
+WITH METRICS LANGUAGE YAML
+COMMENT 'Certified vessel cargo compliance KPIs incl. illustrative grade penalty (USD masked for non-commercial roles).'
+AS $$
+version: 1.1
+source: jack_freeman_catalog.fmg_ore_blending.vessel_compliance
+dimensions:
+  - name: Product
+    expr: CASE product_code WHEN 'FB' THEN 'Fortescue Blend' WHEN 'KF' THEN 'Kings Fines' END
+  - name: Destination Port
+    expr: destination
+  - name: Load Month
+    expr: load_month
+  - name: Load Date
+    expr: DATE(load_complete_ts)
+measures:
+  - name: Vessels
+    expr: COUNT(1)
+  - name: Shipped Dry Tonnes
+    expr: SUM(dry_tonnes)
+  - name: Avg Cargo Fe Pct
+    expr: SUM(fe * dry_tonnes) / SUM(dry_tonnes)
+  - name: Vessels Below Typical Fe
+    expr: SUM(CASE WHEN below_typical THEN 1 ELSE 0 END)
+  - name: Pct Vessels Below Typical Fe
+    expr: AVG(CASE WHEN below_typical THEN 1.0 ELSE 0.0 END) * 100
+  - name: Grade Penalty USD
+    expr: SUM(penalty_usd)
+    comment: Illustrative penalty schedule; NULL for principals without commercial entitlement
+  - name: Penalty USD per Dry Tonne
+    expr: SUM(penalty_usd) / SUM(dry_tonnes)
+$$
+result
+OK
+
+>>> ALTER SCHEMA fmg_ore_blending SET TAGS ('domain' = 'supply_chain', 'fmg_data_product' = 'ore_blending', 'fmg_owner_team' = 'integrated_planning')
+OK
+
+>>> ALTER TABLE train_performance SET TAGS ('layer' = 'gold', 'system.certification_status' = 'certified', 'sensitivity' = 'internal', 'fmg_access_control' = 'row_filter_by_hub')
+OK
+
+>>> ALTER TABLE vessel_compliance SET TAGS ('layer' = 'gold', 'system.certification_status' = 'certified', 'sensitivity' = 'internal', 'fmg_access_control' = 'column_mask_penalty_usd')
+OK
+
+>>> ALTER TABLE stockpile_grade_current SET TAGS ('layer' = 'gold', 'fmg_serving' = 'lakebase_synced')
+OK
+
+>>> ALTER TABLE train_features SET TAGS ('layer' = 'gold', 'fmg_purpose' = 'ml_features')
+OK
+
+>>> ALTER TABLE silver_lab_assays SET TAGS ('layer' = 'silver')
+OK
+
+>>> ALTER TABLE bronze_lims_assays SET TAGS ('layer' = 'bronze')
+OK
+
+>>> ALTER TABLE access_policy SET TAGS ('fmg_purpose' = 'entitlements', 'sensitivity' = 'internal')
+OK
+
+>>> ALTER VIEW blend_compliance_mv SET TAGS ('system.certification_status' = 'certified', 'fmg_semantic_layer' = 'metric_view')
+OK
+
+>>> ALTER VIEW vessel_compliance_mv SET TAGS ('system.certification_status' = 'certified', 'fmg_semantic_layer' = 'metric_view')
+OK
+
+>>> SELECT `Hub`, `Product`, MEASURE(`Trains`) trains, ROUND(MEASURE(`Avg Lab Fe Pct`), 2) avg_fe, ROUND(MEASURE(`Pct Trains Below Typical Fe`), 1) pct_below_typ, ROUND(MEASURE(`Block Model Fe Bias`), 3) bm_bias FROM blend_compliance_mv GROUP BY ALL ORDER BY 1, 2
+Hub | Product | trains | avg_fe | pct_below_typ | bm_bias
+Christmas Creek | Fortescue Blend | 352 | 58.2 | 13.6 | 0.095
+Cloudbreak | Fortescue Blend | 353 | 58.04 | 38.8 | 0.223
+Eliwana | Fortescue Blend | 266 | 58.27 | 12.8 | 0.194
+Solomon | Fortescue Blend | 177 | 57.89 | 80.2 | 0.448
+Solomon | Kings Fines | 177 | 55.94 | 72.3 | 0.446
+OK
+
+>>> SELECT `Product`, `Load Month`, MEASURE(`Vessels`) vessels, ROUND(MEASURE(`Avg Cargo Fe Pct`), 2) fe, MEASURE(`Vessels Below Typical Fe`) below_typ, ROUND(MEASURE(`Grade Penalty USD`), 0) penalty_usd FROM vessel_compliance_mv GROUP BY ALL ORDER BY 1, 2
+Product | Load Month | vessels | fe | below_typ | penalty_usd
+Fortescue Blend | 2026-08-01 | 53 | 58.11 | 6 | 114968.0
+Fortescue Blend | 2026-09-01 | 66 | 58.14 | 8 | 125398.0
+Fortescue Blend | 2026-10-01 | 68 | 58.11 | 9 | 146231.0
+Fortescue Blend | 2026-11-01 | 4 | 58.06 | 0 | 0.0
+Kings Fines | 2026-08-01 | 8 | 55.95 | 6 | 237366.0
+Kings Fines | 2026-09-01 | 10 | 55.91 | 9 | 362317.0
+Kings Fines | 2026-10-01 | 10 | 55.98 | 7 | 289951.0
+Kings Fines | 2026-11-01 | 1 | 55.87 | 1 | 41922.0
+OK

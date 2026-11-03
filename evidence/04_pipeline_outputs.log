@@ -1,0 +1,91 @@
+-- USE CATALOG jack_freeman_catalog
+-- USE SCHEMA fmg_ore_blending
+
+>>> SELECT 'bronze_haul_cycles' t, count(*) n FROM bronze_haul_cycles UNION ALL SELECT 'silver_haul_cycles', count(*) FROM silver_haul_cycles UNION ALL SELECT 'bronze_xba_readings', count(*) FROM bronze_xba_readings UNION ALL SELECT 'silver_xba_readings', count(*) FROM silver_xba_readings UNION ALL SELECT 'bronze_lims_assays', count(*) FROM bronze_lims_assays UNION ALL SELECT 'silver_lab_assays', count(*) FROM silver_lab_assays UNION ALL SELECT 'silver_trains', count(*) FROM silver_trains UNION ALL SELECT 'train_features', count(*) FROM train_features UNION ALL SELECT 'train_performance', count(*) FROM train_performance UNION ALL SELECT 'vessel_compliance', count(*) FROM vessel_compliance UNION ALL SELECT 'stockpile_grade_current', count(*) FROM stockpile_grade_current UNION ALL SELECT 'silver_train_plan', count(*) FROM silver_train_plan
+t | n
+silver_haul_cycles | 197413
+silver_xba_readings | 209772
+silver_lab_assays | 1325
+train_performance | 1354
+bronze_haul_cycles | 197478
+bronze_xba_readings | 210623
+bronze_lims_assays | 1331
+silver_trains | 1354
+train_features | 1354
+vessel_compliance | 220
+stockpile_grade_current | 20
+silver_train_plan | 11
+OK
+
+>>> SELECT details:flow_progress:metrics:num_output_rows::bigint AS output_rows, origin.flow_name AS flow, e.name AS expectation, e.passed_records, e.failed_records FROM (SELECT origin, details, explode(from_json(details:flow_progress:data_quality:expectations, 'array<struct<name:string,dataset:string,passed_records:bigint,failed_records:bigint>>')) e FROM event_log(TABLE(silver_haul_cycles)) WHERE event_type = 'flow_progress' AND details:flow_progress:data_quality IS NOT NULL) ORDER BY flow, expectation
+output_rows | flow | expectation | passed_records | failed_records
+197413 | jack_freeman_catalog.fmg_ore_blending.silver_haul_cycles | known_stockpile | 197438 | 0
+197413 | jack_freeman_catalog.fmg_ore_blending.silver_haul_cycles | known_stockpile | 197438 | 0
+197413 | jack_freeman_catalog.fmg_ore_blending.silver_haul_cycles | known_stockpile | 197438 | 0
+197413 | jack_freeman_catalog.fmg_ore_blending.silver_haul_cycles | valid_bm_fe | 197438 | 0
+197413 | jack_freeman_catalog.fmg_ore_blending.silver_haul_cycles | valid_bm_fe | 197438 | 0
+197413 | jack_freeman_catalog.fmg_ore_blending.silver_haul_cycles | valid_bm_fe | 197438 | 0
+197413 | jack_freeman_catalog.fmg_ore_blending.silver_haul_cycles | valid_payload | 197413 | 25
+197413 | jack_freeman_catalog.fmg_ore_blending.silver_haul_cycles | valid_payload | 197413 | 25
+197413 | jack_freeman_catalog.fmg_ore_blending.silver_haul_cycles | valid_payload | 197413 | 25
+1325 | jack_freeman_catalog.fmg_ore_blending.silver_lab_assays | fe_closure | 1325 | 6
+1325 | jack_freeman_catalog.fmg_ore_blending.silver_lab_assays | fe_closure | 1325 | 6
+1325 | jack_freeman_catalog.fmg_ore_blending.silver_lab_assays | fe_closure | 1325 | 6
+1325 | jack_freeman_catalog.fmg_ore_blending.silver_lab_assays | sio2_closure | 1331 | 0
+1325 | jack_freeman_catalog.fmg_ore_blending.silver_lab_assays | sio2_closure | 1331 | 0
+1325 | jack_freeman_catalog.fmg_ore_blending.silver_lab_assays | sio2_closure | 1331 | 0
+1325 | jack_freeman_catalog.fmg_ore_blending.silver_lab_assays | turnaround_under_72h | 1331 | 0
+1325 | jack_freeman_catalog.fmg_ore_blending.silver_lab_assays | turnaround_under_72h | 1331 | 0
+1325 | jack_freeman_catalog.fmg_ore_blending.silver_lab_assays | turnaround_under_72h | 1331 | 0
+1354 | jack_freeman_catalog.fmg_ore_blending.silver_trains | plausible_tonnage | 1354 | 0
+1354 | jack_freeman_catalog.fmg_ore_blending.silver_trains | plausible_tonnage | 1354 | 0
+1354 | jack_freeman_catalog.fmg_ore_blending.silver_trains | plausible_tonnage | 1354 | 0
+1354 | jack_freeman_catalog.fmg_ore_blending.silver_trains | train_id_present | 1354 | 0
+1354 | jack_freeman_catalog.fmg_ore_blending.silver_trains | train_id_present | 1354 | 0
+1354 | jack_freeman_catalog.fmg_ore_blending.silver_trains | train_id_present | 1354 | 0
+209772 | jack_freeman_catalog.fmg_ore_blending.silver_xba_readings | analyser_ok | 209772 | 851
+209772 | jack_freeman_catalog.fmg_ore_blending.silver_xba_readings | analyser_ok | 209772 | 851
+209772 | jack_freeman_catalog.fmg_ore_blending.silver_xba_readings | analyser_ok | 209772 | 851
+209772 | jack_freeman_catalog.fmg_ore_blending.silver_xba_readings | fe_in_range | 209772 | 851
+209772 | jack_freeman_catalog.fmg_ore_blending.silver_xba_readings | fe_in_range | 209772 | 851
+209772 | jack_freeman_catalog.fmg_ore_blending.silver_xba_readings | fe_in_range | 209772 | 851
+OK
+
+>>> SELECT hub_code, product_code, count(*) trains, round(avg(lab_fe),2) avg_lab_fe, round(avg(fe_typ),2) fe_typical, round(avg(CAST(below_typical_fe AS INT))*100,1) pct_below_typical, round(avg(bm_fe_error),2) avg_block_model_fe_error, round(avg(xba_fe_error),2) avg_analyser_fe_error, sum(CASE WHEN lab_status='AWAITING_LAB' THEN 1 ELSE 0 END) awaiting_lab FROM train_performance GROUP BY ALL ORDER BY 1,2
+hub_code | product_code | trains | avg_lab_fe | fe_typical | pct_below_typical | avg_block_model_fe_error | avg_analyser_fe_error | awaiting_lab
+CB | FB | 361 | 58.04 | 58.0 | 38.8 | 0.22 | 0.26 | 6
+CC | FB | 361 | 58.2 | 58.0 | 13.6 | 0.1 | -0.04 | 6
+ELI | FB | 271 | 58.27 | 58.0 | 12.8 | 0.19 | -0.04 | 4
+SOL | FB | 181 | 57.89 | 58.0 | 80.2 | 0.45 | -0.1 | 4
+SOL | KF | 180 | 55.94 | 56.0 | 72.3 | 0.45 | -0.11 | 3
+OK
+
+>>> SELECT product_code, count(*) vessels, round(sum(dry_tonnes)/1e6,2) dry_mt, sum(CAST(below_typical AS INT)) vessels_below_typical, round(sum(penalty_usd)/1e6,2) penalty_usd_m, round(avg(fe),2) avg_fe FROM vessel_compliance GROUP BY ALL
+product_code | vessels | dry_mt | vessels_below_typical | penalty_usd_m | avg_fe
+FB | 191 | 36.4 | 23 | 0.39 | 58.12
+KF | 29 | 5.55 | 23 | 0.93 | 55.94
+OK
+
+>>> SELECT stockpile_id, grade_class, product_code, round(tonnes_on_hand/1000,0) kt_on_hand, bm_fe, recon_fe, hub_bm_bias_fe, recon_trains FROM stockpile_grade_current ORDER BY stockpile_id
+stockpile_id | grade_class | product_code | kt_on_hand | bm_fe | recon_fe | hub_bm_bias_fe | recon_trains
+CB-ROM-01 | HG | FB | 128.0 | 59.469 | 59.2382 | -0.231 | 50
+CB-ROM-02 | MG1 | FB | 280.0 | 58.4313 | 58.2005 | -0.231 | 50
+CB-ROM-03 | MG2 | FB | 171.0 | 57.5533 | 57.3225 | -0.231 | 50
+CB-ROM-04 | LG1 | FB | 1012.0 | 57.6541 | 57.4233 | -0.231 | 50
+CB-ROM-05 | LG2 | FB | 1334.0 | 56.0253 | 55.7945 | -0.231 | 50
+CC-ROM-01 | HG | FB | 627.0 | 59.5061 | 59.4193 | -0.087 | 49
+CC-ROM-02 | MG1 | FB | 342.0 | 58.6197 | 58.533 | -0.087 | 49
+CC-ROM-03 | MG2 | FB | 349.0 | 58.0759 | 57.9891 | -0.087 | 49
+CC-ROM-04 | LG1 | FB | 476.0 | 57.4854 | 57.3987 | -0.087 | 49
+CC-ROM-05 | LG2 | FB | 972.0 | 56.3804 | 56.2937 | -0.087 | 49
+ELI-ROM-01 | HG | FB | 1406.0 | 60.7087 | 60.517 | -0.192 | 38
+ELI-ROM-02 | MG1 | FB | 1441.0 | 60.3172 | 60.1255 | -0.192 | 38
+ELI-ROM-03 | MG2 | FB | 1122.0 | 59.6352 | 59.4435 | -0.192 | 38
+ELI-ROM-04 | LG1 | FB | 869.0 | 58.8954 | 58.7037 | -0.192 | 38
+ELI-ROM-05 | LG2 | FB | 258.0 | 57.0269 | 56.8352 | -0.192 | 38
+SOL-ROM-01 | HG | FB | 1540.0 | 59.2686 | 58.8404 | -0.428 | 49
+SOL-ROM-02 | MG1 | FB | 661.0 | 58.8129 | 58.3847 | -0.428 | 49
+SOL-ROM-03 | MG2 | FB | 150.0 | 57.68 | 57.2518 | -0.428 | 49
+SOL-ROM-04 | LG1 | KF | 624.0 | 57.556 | 57.1278 | -0.428 | 49
+SOL-ROM-05 | LG2 | KF | 145.0 | 55.9898 | 55.5616 | -0.428 | 49
+OK

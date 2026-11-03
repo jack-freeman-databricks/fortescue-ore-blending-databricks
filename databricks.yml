@@ -1,0 +1,32 @@
+# Fortescue ore blending & train load-out grade compliance (synthetic data demo)
+# Lakeflow pipeline -> UC governance -> ML (MLflow/UC) -> Lakebase -> Genie -> Databricks App
+bundle:
+  name: fortescue-ore-blending
+
+variables:
+  catalog:
+    default: jack_freeman_catalog
+  schema:
+    default: fmg_ore_blending
+  warehouse_id:
+    default: 495cddfca8ecaa75
+
+include:
+  - resources/*.yml
+
+sync:
+  exclude:
+    - data/**
+    - .venv/**
+    - evidence/**
+    - deck/**
+    - "**/uv.lock"
+    - "**/node_modules/**"
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://fevm-serverless-stable-1s8h43.cloud.databricks.com
+      profile: fevm-serverless-stable-1s8h43

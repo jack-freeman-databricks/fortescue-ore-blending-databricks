@@ -1,0 +1,36 @@
+resources:
+  jobs:
+    score_and_recommend:
+      name: fmg-ore-blending-score-and-recommend
+      description: >
+        Per shift: refresh Lakeflow pipeline -> score in-flight trains with train_grade_predictor@champion ->
+        recommend blends for planned trains (+ ai_query rationale) -> land app decisions from Lakebase in Delta
+        and refresh Lakebase synced tables.
+      schedule:
+        quartz_cron_expression: "0 30 5,17 * * ?"   # 05:30 / 17:30 AWST, before each shift
+        timezone_id: Australia/Perth
+        pause_status: PAUSED
+      environments:
+        - environment_key: ml
+          spec:
+            environment_version: "4"
+            dependencies:
+              - scikit-learn==1.9.1
+              - mlflow[databricks]>=3.5
+              - scipy
+              - psycopg[binary]>=3.2
+              - databricks-sdk>=0.81
+      tasks:
+        - task_key: refresh_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.ore_blending_pipeline.id}
+        - task_key: score_and_recommend
+          depends_on: [{task_key: refresh_pipeline}]
+          environment_key: ml
+          spark_python_task:
+            python_file: ../notebooks/02_score_and_recommend.py
+        - task_key: sync_decisions
+          depends_on: [{task_key: score_and_recommend}]
+          environment_key: ml
+          spark_python_task:
+            python_file: ../notebooks/03_sync_decisions_to_delta.py

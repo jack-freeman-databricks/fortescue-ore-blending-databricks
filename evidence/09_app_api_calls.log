@@ -1,0 +1,258 @@
+App: fortescue-maintenance-runner  URL: https://fortescue-maintenance-runner-7474655787821037.aws.databricksapps.com
+
+### GET /api/health  ->  HTTP 200  (round trip 2001 ms, Lakebase time in app 4.3 ms)
+{
+ "ok": true,
+ "lakebase": "2026-11-03T13:11:11.420753+00:00",
+ "user": "70e678f6-7f63-49bf-b1fc-d34037e79eff"
+}
+
+### GET /api/summary  ->  HTTP 200  (round trip 1747 ms, Lakebase time in app 6.8 ms)
+{
+ "inflight_trains": 23,
+ "inflight_at_risk": 12,
+ "planned_trains": 11,
+ "decided": 0,
+ "sol_bias": -0.428,
+ "as_of": "2026-11-03T06:00:00+00:00"
+}
+
+### GET /api/trains/inflight  ->  HTTP 200  (round trip 1692 ms, Lakebase time in app 5.2 ms)
+[
+ {
+  "train_id": "T001359",
+  "hub_code": "SOL",
+  "product_code": "FB",
+  "depart_ts": "2026-11-03T03:56:23+00:00",
+  "wet_tonnes": 33798.0,
+  "bm_fe": 58.29571525419407,
+  "xba_fe": 57.81509933774836,
+  "pred_fe": 57.86536747338613,
+  "pred_fe_band": 0.2380616139013057,
+  "pred_sio2": 5.291412441832781,
+  "pred_al2o3": 2.5318646979342265,
+  "fe_typ": 58.0,
+  "predicted_status": "AT_RISK",
+  "hours_until_lab": 33.93972222222222
+ },
+ {
+  "train_id": "T001351",
+  "hub_code": "CB",
+  "product_code": "FB",
+  "depart_ts": "2026-11-03T03:36:20+00:00",
+  "wet_tonnes": 34808.0,
+  "bm_fe": 58.22733519808185,
+  "xba_fe": 58.19277027027027,
+  "pred_fe": 57.994725359932175,
+  "pred_fe_band": 0.2380616139013057,
+  "pred_sio2": 5.720292741031314,
+  "pred_al2o3": 2.4380913914040208,
+  "fe_typ": 58.0,
+  "predicted_status": "AT_RISK",
+  "hours_until_lab": 33.605555555555554
+ },
+ {
+  "train_id": "T0013 …
+-> 23 in-flight trains returned from Lakebase
+
+### GET /api/recommendations  ->  HTTP 200  (round trip 1734 ms, Lakebase time in app 5.2 ms)
+[
+ {
+  "recommendation_id": "REC-T001360",
+  "planned_train_id": "T001360",
+  "hub_code": "SOL",
+  "product_code": "KF",
+  "planned_load_start": "2026-11-03T06:49:10+00:00",
+  "target_wet_t": 34500.0,
+  "status": "OPTIMAL",
+  "pred_fe": 56.179,
+  "pred_sio2": 6.5805,
+  "pred_al2o3": 3.2939,
+  "bm_view_fe": 56.6072,
+  "fe_typ": 56.0,
+  "rationale": "Reclaim 13,600 tonnes from SOL-ROM-04 and 20,900 tonnes from SOL-ROM-05 to make typical KF grade at 56.18% iron. This blend meets spec with minimal giveaway, blending 0.18% above the 56.0% target.",
+  "optimiser_message": "Meets typical Fe with margin at minimum Fe giveaway",
+  "decision": null,
+  "decided_by": null,
+  "decided_at": null,
+  "final_blend": null,
+  "decision_reason": null,
+  "decided_fe": null,
+  "blend": {
+   "SOL-ROM-04": 13600.0,
+   "SOL-ROM-05": 20900.0
+  }
+ },
+ {
+  "recommendation_id": "REC-T001356",
+  "planned_train_id": "T001356",
+  "hub_code": "CC",
+  "product_code": "FB",
+  "planned_load_start": "2026-11-03T07:07:15+00:00",
+  "target_wet_t": 34500.0,
+  "status": "OPTIMAL",
+  "pred_fe": 58.1805,
+  "pred_sio2": 5.0009,
+  "pred_al2o3": 2.3395,
+  "bm_view_fe": 58.2673,
+  "fe_typ": 58.0,
+  "rationale": "Reclaim 7,700 tonnes from CC-ROM-01, 24,200 tonnes from CC-ROM-03, and 2,600 tonnes from CC-ROM-05 to make FB product at 58.18% Fe. This blend meets the 58.0% typical specification with minimal giveaway while optimally using available CC hub stockpiles.",
+  "optimiser_message": "Meets typical Fe with margin at min …
+
+### POST /api/recommendations/REC-T001352/decision  ->  HTTP 200  (round trip 1797 ms, Lakebase time in app 12.3 ms)
+request: {"action": "APPROVED"}
+{
+ "decision_id": 3,
+ "decided_at": "2026-11-03T13:11:18.394070+00:00"
+}
+
+### POST /api/stockpiles/SOL-ROM-01/availability  ->  HTTP 200  (round trip 1753 ms, Lakebase time in app 8.6 ms)
+request: {"available": false, "reason": "Reclaimer RC2 down for belt repair"}
+{
+ "ok": true
+}
+
+### POST /api/recommendations/REC-T001361/replan  ->  HTTP 200  (round trip 1739 ms, Lakebase time in app 8.9 ms)
+request: {}
+{
+ "status": "BEST_EFFORT",
+ "blend": {
+  "SOL-ROM-03": 10400.0,
+  "SOL-ROM-02": 24200.0
+ },
+ "predicted": {
+  "fe": 58.0442,
+  "sio2": 5.4239,
+  "al2o3": 2.5718,
+  "p": 0.0684,
+  "loi": 8.7866
+ },
+ "block_model_view": {
+  "fe": 58.4724,
+  "sio2": 5.145,
+  "al2o3": 2.4736,
+  "p": 0.0654,
+  "loi": 8.6489
+ },
+ "message": "Typical Fe not reachable from available stockpiles; maximised Fe"
+}
+-> original blend {'SOL-ROM-01': 20100.0, 'SOL-ROM-03': 14400.0} pred Fe 58.18; re-plan {'SOL-ROM-03': 10400.0, 'SOL-ROM-02': 24200.0} pred Fe 58.0442 (BEST_EFFORT)
+
+### POST /api/recommendations/REC-T001361/decision  ->  HTTP 200  (round trip 1761 ms, Lakebase time in app 14.7 ms)
+request: {"action": "OVERRIDDEN", "blend": {"SOL-ROM-03": 10400.0, "SOL-ROM-02": 24200.0}, "predicted_fe": 58.0442, "reason": "SOL-ROM-01 unavailable (reclaimer RC2), re-planned without it"}
+{
+ "decision_id": 4,
+ "decided_at": "2026-11-03T13:11:23.664784+00:00"
+}
+
+### POST reject without reason -> HTTP 400 {"detail":"a reason is required for overrides and rejections"}  (expected 400)
+
+### GET /api/decisions  ->  HTTP 200  (round trip 1717 ms, Lakebase time in app 5.0 ms)
+[
+ {
+  "decision_id": 4,
+  "recommendation_id": "REC-T001361",
+  "planned_train_id": "T001361",
+  "hub_code": "SOL",
+  "action": "OVERRIDDEN",
+  "final_blend": {
+   "SOL-ROM-02": 24200.0,
+   "SOL-ROM-03": 10400.0
+  },
+  "predicted_fe": 58.0442,
+  "reason": "SOL-ROM-01 unavailable (reclaimer RC2), re-planned without it",
+  "decided_by": "jack.freeman@databricks.com",
+  "decided_at": "2026-11-03T13:11:23.664784+00:00"
+ },
+ {
+  "decision_id": 3,
+  "recommendation_id": "REC-T001352",
+  "planned_train_id": "T001352",
+  "hub_code": "CB",
+  "action": "APPROVED",
+  "final_blend": {
+   "CB-ROM-01": 15400.0,
+   "CB-ROM-03": 19100.0
+  },
+  "predicted_fe": 58.1776,
+  "reason": null,
+  "decided_by": "jack.freeman@databricks.com",
+  "decided_at": "2026-11-03T13:11:18.394070+00:00"
+ }
+]
+
+### GET /api/stockpiles  ->  HTTP 200  (round trip 1761 ms, Lakebase time in app 6.7 ms)
+[
+ {
+  "stockpile_id": "CB-ROM-01",
+  "hub_code": "CB",
+  "grade_class": "HG",
+  "product_code": "FB",
+  "tonnes_on_hand": 128063.39999999525,
+  "bm_fe": 59.469,
+  "recon_fe": 59.2382,
+  "recon_sio2": 4.8219,
+  "recon_al2o3": 2.1552,
+  "hub_bm_bias_fe": -0.231,
+  "available": true,
+  "availability_reason": null,
+  "updated_by": null
+ },
+ {
+  "stockpile_id": "CB-ROM-02",
+  "hub_code": "CB",
+  "grade_class": "MG1",
+  "product_code": "FB",
+  "tonnes_on_hand": 280169.70000001043,
+  "bm_fe": 58.4313,
+  "recon_fe": 58.2005,
+  "recon_sio2": 5.3105,
+  "recon_al2o3": 2.3594,
+  "hub_bm_bias_fe": -0.231, …
+-> SOL-ROM-01 now: [{'stockpile_id': 'SOL-ROM-01', 'hub_code': 'SOL', 'grade_class': 'HG', 'product_code': 'FB', 'tonnes_on_hand': 1540303.899999997, 'bm_fe': 59.2686, 'recon_fe': 58.8404, 'recon_sio2': 4.7927, 'recon_al2o3': 2.3064, 'hub_bm_bias_fe': -0.428, 'available': False, 'availability_reason': 'Reclaimer RC2 down for belt repair', 'updated_by': 'jack.freeman@databricks.com'}]
+
+### POST /api/genie  ->  HTTP 200  (round trip 20293 ms, Lakebase time in app 0.0 ms)
+request: {"question": "Which hub had the highest share of trains below typical Fe in October?"}
+{
+ "conversation_id": "01f1d78815f7174b8a0b5c0bc9b13203",
+ "text": "You want to see the percentage of trains below the typical iron (Fe) grade for each mine hub in October 2026, and identify which hub had the highest share of such trains.",
+ "followup": "In October 2026, **Solomon** had the highest share of trains below typical Fe at **73.38700%**. Based on the result returned, **Solomon** was the top hub on this measure for the month.",
+ "sql": "WITH hub_kpis AS (\n  SELECT\n    `Hub`,\n    MEASURE(`Pct Trains Below Typical Fe`) AS `pct_below_typical`\n  FROM `jack_freeman_catalog`.`fmg_ore_blending`.`blend_compliance_mv`\n  WHERE `Departure Month` = DATE '2026-10-01'\n    AND `Hub` IS NOT NULL\n  GROUP BY ALL\n), ranked AS (\n  SELECT\n    `Hub`,\n    `pct_below_typical`,\n    RANK() OVER (ORDER BY `pct_below_typical` DESC) AS `rnk`\n  FROM hub_kpis\n)\nSELECT `Hub`, `pct_below_typical`\nFROM ranked\nWHERE `rnk` = 1",
+ "columns": [
+  "Hub",
+  "pct_below_typical"
+ ],
+ "rows": [
+  [
+   "Solomon",
+   "73.38700"
+  ]
+ ]
+}
+
+### POST /api/genie  ->  HTTP 200  (round trip 22555 ms, Lakebase time in app 0.0 ms)
+request: {"question": "And what was its average block model Fe error?", "conversation_id": "01f1d78815f7174b8a0b5c0bc9b13203"}
+{
+ "conversation_id": "01f1d78815f7174b8a0b5c0bc9b13203",
+ "text": "You want to know the average block model iron (Fe) error for the hub that had the highest percentage of trains below the typical Fe grade in October 2026.",
+ "followup": "The hub with the highest share of trains below typical Fe in October was **Solomon**, and **Solomon** had an average block model Fe error of **0.46**.",
+ "sql": "WITH hub_kpis AS (\n  SELECT\n    `Hub`,\n    MEASURE(`Pct Trains Below Typical Fe`) AS `pct_below_typical`,\n    MEASURE(`Block Model Fe Bias`) AS `avg_block_model_fe_error`\n  FROM `jack_freeman_catalog`.`fmg_ore_blending`.`blend_compliance_mv`\n  WHERE `Departure Month` = DATE '2026-10-01'\n    AND `Hub` IS NOT NULL\n  GROUP BY ALL\n), ranked AS (\n  SELECT\n    `Hub`,\n    `pct_below_typical`,\n    `avg_block_model_fe_error`,\n    RANK() OVER (ORDER BY `pct_below_typical` DESC) AS `rnk`\n  FROM hub_kpis\n)\nSELECT `Hub`, `avg_block_model_fe_error`\nFROM ranked\nWHERE `rnk` = 1",
+ "columns": [
+  "Hub",
+  "avg_block_model_fe_error"
+ ],
+ "rows": [
+  [
+   "Solomon",
+   "0.45638359432333236"
+  ]
+ ]
+}
+
+### POST /api/stockpiles/SOL-ROM-01/availability  ->  HTTP 200  (round trip 1766 ms, Lakebase time in app 6.0 ms)
+request: {"available": true, "reason": "Returned to service"}
+{
+ "ok": true
+}
+
+SMOKE TEST PASSED

@@ -1,0 +1,5 @@
+hub_code,hub_name,latitude,longitude,tlo_id,trains_per_day
+CB,Cloudbreak,-22.3,119.43,CB-TLO1,4
+CC,Christmas Creek,-22.38,119.65,CC-TLO1,4
+SOL,Solomon,-22.13,117.95,SOL-TLO1,4
+ELI,Eliwana,-22.45,116.87,ELI-TLO1,3

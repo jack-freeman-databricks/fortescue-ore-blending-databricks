@@ -1,0 +1,13 @@
+{
+  "update_mask": "description,resources",
+  "app": {
+    "description": "Fortescue Blend Control Room: train load-out grade compliance (Lakebase + ML + Genie)",
+    "resources": [
+      {"name": "postgres", "postgres": {"branch": "projects/fmg-ore-blending/branches/production",
+        "database": "projects/fmg-ore-blending/branches/production/databases/databricks-postgres",
+        "permission": "CAN_CONNECT_AND_CREATE"}},
+      {"name": "sql-warehouse", "sql_warehouse": {"id": "495cddfca8ecaa75", "permission": "CAN_USE"}},
+      {"name": "genie-space", "genie_space": {"name": "Fortescue Blend Compliance", "space_id": "01f1d784cd381d9a847bfae03a44cfbf", "permission": "CAN_RUN"}}
+    ]
+  }
+}

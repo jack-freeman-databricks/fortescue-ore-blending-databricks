@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Blend Control Room · Fortescue</title>
+<style>
+  :root { --navy:#0B2026; --lava:#FF3621; --bg:#F9F7F4; --card:#fff; --line:#E4E0DA; --muted:#5F6B6E;
+          --ok:#1F7A4D; --warn:#B7791F; --bad:#C2341B; --blue:#2463A6; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"DM Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+         background:var(--bg); color:var(--navy); font-size:14px; }
+  header { background:var(--navy); color:#fff; padding:14px 24px; display:flex; align-items:center; gap:16px; }
+  header h1 { font-size:18px; margin:0; font-weight:600; }
+  header .sub { color:#B9C4C7; font-size:13px; }
+  header .asof { margin-left:auto; font-size:12px; color:#B9C4C7; text-align:right; }
+  .dot { width:10px; height:10px; background:var(--lava); border-radius:2px; display:inline-block; }
+  main { display:grid; grid-template-columns: minmax(0,1fr) 400px; gap:20px; padding:20px 24px; }
+  .kpis { grid-column:1 / -1; display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+  .kpi { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:14px 16px; }
+  .kpi .v { font-size:28px; font-weight:600; font-variant-numeric:tabular-nums; }
+  .kpi .l { color:var(--muted); font-size:12px; margin-top:2px; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:20px; }
+  section h2 { font-size:15px; margin:0 0 4px; }
+  section .hint { color:var(--muted); font-size:12px; margin:0 0 12px; }
+  table { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums; }
+  th { text-align:left; font-weight:500; color:var(--muted); font-size:12px; border-bottom:1px solid var(--line); padding:6px 8px; }
+  td { padding:7px 8px; border-bottom:1px solid #F0ECE6; }
+  td.n, th.n { text-align:right; }
+  .pill { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; }
+  .ON_SPEC, .OPTIMAL, .APPROVED { background:#E3F2EA; color:var(--ok); }
+  .AT_RISK, .BEST_EFFORT, .OVERRIDDEN { background:#FBF0DC; color:var(--warn); }
+  .OFF_SPEC_LIKELY, .INFEASIBLE, .REJECTED { background:#FBE4DF; color:var(--bad); }
+  .PENDING { background:#ECEFF0; color:var(--muted); }
+  .rec { border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin-bottom:12px; }
+  .rec .top { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .rec .title { font-weight:600; }
+  .rec .meta { color:var(--muted); font-size:12px; }
+  .grades { display:flex; gap:18px; margin:10px 0 6px; flex-wrap:wrap; }
+  .grades div { font-size:12px; color:var(--muted); }
+  .grades b { display:block; font-size:18px; color:var(--navy); font-variant-numeric:tabular-nums; }
+  .bar { display:flex; height:22px; border-radius:4px; overflow:hidden; margin:8px 0 4px; }
+  .bar span { color:#fff; font-size:11px; display:flex; align-items:center; justify-content:center; white-space:nowrap; overflow:hidden; }
+  .why { background:#F6F4F0; border-left:3px solid var(--lava); padding:8px 10px; font-size:13px; margin:8px 0; }
+  .why small { display:block; color:var(--muted); font-size:11px; margin-bottom:2px; }
+  .actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; align-items:center; }
+  button { font:inherit; font-size:13px; border:1px solid var(--line); background:#fff; border-radius:6px; padding:6px 12px; cursor:pointer; }
+  button.primary { background:var(--navy); color:#fff; border-color:var(--navy); }
+  button.lava { background:var(--lava); color:#fff; border-color:var(--lava); }
+  button:disabled { opacity:.5; cursor:default; }
+  input[type=text] { font:inherit; border:1px solid var(--line); border-radius:6px; padding:6px 10px; min-width:220px; }
+  .replan { background:#F3F7FB; border:1px dashed var(--blue); border-radius:6px; padding:8px 10px; margin-top:8px; font-size:13px; }
+  .toggle { cursor:pointer; }
+  .err { color:var(--bad); font-size:12px; }
+  aside section { position:sticky; top:20px; }
+  .chat { display:flex; flex-direction:column; gap:10px; max-height:68vh; overflow:auto; margin:8px 0; }
+  .q { align-self:flex-end; background:var(--navy); color:#fff; padding:8px 10px; border-radius:8px 8px 0 8px; max-width:90%; }
+  .a { background:#F6F4F0; padding:8px 10px; border-radius:8px 8px 8px 0; font-size:13px; }
+  .a table { font-size:12px; margin-top:6px; }
+  .a details { margin-top:6px; font-size:11px; color:var(--muted); }
+  .a pre { white-space:pre-wrap; background:#fff; padding:6px; border-radius:4px; border:1px solid var(--line); }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .chips button { font-size:12px; padding:4px 8px; background:#F6F4F0; }
+  .ask { display:flex; gap:6px; }
+  .ask input { flex:1; min-width:0; }
+  .muted { color:var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <span class="dot"></span>
+  <div>
+    <h1>Blend Control Room</h1>
+    <div class="sub">Train load-out grade compliance · Cloudbreak · Christmas Creek · Solomon · Eliwana</div>
+  </div>
+  <div class="asof" id="asof">loading…</div>
+</header>
+<main>
+  <div class="kpis" id="kpis"></div>
+  <div>
+    <section>
+      <h2>Today's planned trains: recommended reclaim blends</h2>
+      <p class="hint">The optimiser blends on <b>lab-reconciled</b> stockpile grade (block model corrected by each hub's recent lab bias) and uses the least iron that still meets typical Fe with a safety margin. Approve, re-plan around a stockpile outage, or reject. Every decision is written to Lakebase with your name.</p>
+      <div id="recs"></div>
+    </section>
+    <section>
+      <h2>In-flight trains: predicted lab grade before the lab returns</h2>
+      <p class="hint">These trains have left the load-out and their lab assay is 24-48 h away. The UC-registered ML model predicts the lab Fe now, so the port can blend at the stockyard before a vessel is loaded off-spec.</p>
+      <table id="inflight"></table>
+    </section>
+    <section>
+      <h2>ROM stockpiles</h2>
+      <p class="hint">Block model vs lab-reconciled Fe. Click a status to take a stockpile out of service (reclaimer down, geotech hold). Re-plans use it immediately.</p>
+      <table id="stockpiles"></table>
+    </section>
+  </div>
+  <aside>
+    <section>
+      <h2>Ask Genie</h2>
+      <p class="hint">Natural-language questions over the governed blend-compliance data (Genie Agent on Unity Catalog).</p>
+      <div class="chips" id="chips"></div>
+      <div class="chat" id="chat"></div>
+      <form class="ask" id="askform"><input type="text" id="askq" placeholder="e.g. Which hub had the most below-typical trains last month?" /><button class="primary">Ask</button></form>
+    </section>
+  </aside>
+</main>
+<script>
+const $ = (s) => document.querySelector(s);
+const fmt = (v, d = 2) => (v === null || v === undefined ? "–" : Number(v).toFixed(d));
+const kt = (v) => (v === null || v === undefined ? "–" : (v / 1000).toFixed(1) + " kt");
+const COLORS = ["#0B2026", "#2463A6", "#FF3621", "#1F7A4D", "#B7791F"];
+const HUB = { CB: "Cloudbreak", CC: "Christmas Creek", SOL: "Solomon", ELI: "Eliwana" };
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  if (!r.ok) { let t = await r.text(); try { t = JSON.parse(t).detail; } catch (e) {} throw new Error(t); }
+  return r.json();
+}
+const post = (p, b) => api(p, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(b) });
+
+async function loadSummary() {
+  const s = await api("/api/summary");
+  $("#asof").innerHTML = `Shift as of ${s.as_of ? s.as_of.replace("T", " ").slice(0, 16) : "–"} AWST<br/>Lakebase · live`;
+  $("#kpis").innerHTML = [
+    [s.inflight_trains, "trains in flight, awaiting lab"],
+    [s.inflight_at_risk, "in-flight trains predicted below typical Fe"],
+    [`${s.decided}/${s.planned_trains}`, "planned trains with a controller decision"],
+    [`${fmt(s.sol_bias, 2)}%`, "Solomon block-model Fe bias vs lab (last 14 d)"],
+  ].map(([v, l]) => `<div class="kpi"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
+}
+
+function blendBar(blend) {
+  const tot = Object.values(blend).reduce((a, b) => a + b, 0) || 1;
+  return `<div class="bar">${Object.entries(blend).map(([k, v], i) =>
+    `<span style="width:${(100 * v) / tot}%;background:${COLORS[i % COLORS.length]}" title="${k}: ${kt(v)}">${k} · ${kt(v)}</span>`).join("")}</div>`;
+}
+
+async function loadRecs() {
+  const recs = await api("/api/recommendations");
+  $("#recs").innerHTML = recs.map((r) => {
+    const st = r.decision || "PENDING";
+    const blend = r.decision ? r.final_blend : r.blend;
+    const delta = r.pred_fe - r.bm_view_fe;
+    return `<div class="rec" id="rec-${r.recommendation_id}">
+      <div class="top"><span class="title">${r.planned_train_id} · ${HUB[r.hub_code]} · ${r.product_code === "FB" ? "Fortescue Blend" : "Kings Fines"}</span>
+        <span class="meta">load ${r.planned_load_start.replace("T", " ").slice(0, 16)} · ${kt(r.target_wet_t)}</span>
+        <span class="pill ${r.status}">${r.status}</span><span class="pill ${st}">${st}</span></div>
+      ${blendBar(blend)}
+      <div class="grades">
+        <div><b>${fmt(r.decided_fe ?? r.pred_fe)}%</b>predicted Fe (reconciled)</div>
+        <div><b>${fmt(r.fe_typ, 1)}%</b>typical Fe</div>
+        <div><b>${fmt(r.bm_view_fe)}%</b>block model would show</div>
+        <div><b>${fmt(r.pred_sio2)}% / ${fmt(r.pred_al2o3)}%</b>SiO₂ / Al₂O₃</div>
+      </div>
+      ${Math.abs(delta) > 0.2 ? `<div class="meta">The block model over-states this blend by ${fmt(-delta)}% Fe. A controller trusting it would under-deliver iron.</div>` : ""}
+      <div class="why"><small>AI rationale · ai_query (Claude on Databricks)</small>${r.rationale || "–"}</div>
+      ${r.decision ? `<div class="meta">${r.decision} by ${r.decided_by} at ${r.decided_at.replace("T", " ").slice(0, 16)}${r.decision_reason ? ` · “${r.decision_reason}”` : ""}</div>` : `
+      <div class="actions">
+        <button class="primary" onclick="decide('${r.recommendation_id}','APPROVED')">Approve blend</button>
+        <button onclick="replan('${r.recommendation_id}')">Re-plan with current stockpiles</button>
+        <input type="text" id="reason-${r.recommendation_id}" placeholder="reason (required to reject/override)" />
+        <button onclick="decide('${r.recommendation_id}','REJECTED')">Reject</button>
+        <span class="err" id="err-${r.recommendation_id}"></span>
+      </div><div id="rp-${r.recommendation_id}"></div>`}
+    </div>`;
+  }).join("") || '<p class="muted">No planned trains.</p>';
+}
+
+async function decide(id, action, blend, fe) {
+  const reason = ($("#reason-" + id) || {}).value || null;
+  try { await post(`/api/recommendations/${id}/decision`, { action, reason, blend, predicted_fe: fe }); await refresh(); }
+  catch (e) { $("#err-" + id).textContent = e.message; }
+}
+window.decide = decide;
+window.replan = async (id) => {
+  const box = $("#rp-" + id); box.innerHTML = '<div class="replan">Re-optimising…</div>';
+  try {
+    const r = await post(`/api/recommendations/${id}/replan`, {});
+    window["_rp_" + id] = r;
+    box.innerHTML = `<div class="replan"><span class="pill ${r.status}">${r.status}</span> ${r.message}${blendBar(r.blend)}
+      Predicted Fe <b>${fmt(r.predicted.fe)}%</b> · block model view ${fmt(r.block_model_view.fe)}%
+      <div class="actions"><button class="lava" onclick="decide('${id}','OVERRIDDEN', window._rp_${id}.blend, window._rp_${id}.predicted.fe)">Use re-plan (override)</button></div></div>`;
+  } catch (e) { box.innerHTML = `<div class="err">${e.message}</div>`; }
+};
+
+async function loadInflight() {
+  const rows = await api("/api/trains/inflight");
+  $("#inflight").innerHTML = `<tr><th>Train</th><th>Hub</th><th>Product</th><th>Departed</th><th class="n">Block model Fe</th><th class="n">Analyser Fe</th><th class="n">Predicted lab Fe</th><th class="n">Typical</th><th>Status</th><th class="n">Lab due in</th></tr>` +
+    rows.map((r) => `<tr><td>${r.train_id}</td><td>${HUB[r.hub_code]}</td><td>${r.product_code}</td><td>${r.depart_ts.replace("T", " ").slice(5, 16)}</td>
+      <td class="n">${fmt(r.bm_fe)}</td><td class="n">${fmt(r.xba_fe)}</td><td class="n"><b>${fmt(r.pred_fe)}</b> <span class="muted">±${fmt(r.pred_fe_band)}</span></td>
+      <td class="n">${fmt(r.fe_typ, 1)}</td><td><span class="pill ${r.predicted_status}">${r.predicted_status.replaceAll("_", " ")}</span></td><td class="n">${fmt(r.hours_until_lab, 0)} h</td></tr>`).join("");
+}
+
+async function loadStockpiles() {
+  const rows = await api("/api/stockpiles");
+  $("#stockpiles").innerHTML = `<tr><th>Stockpile</th><th>Class</th><th>Product</th><th class="n">On hand</th><th class="n">Block model Fe</th><th class="n">Reconciled Fe</th><th class="n">SiO₂</th><th class="n">Al₂O₃</th><th>Status</th></tr>` +
+    rows.map((r) => `<tr><td>${r.stockpile_id}</td><td>${r.grade_class}</td><td>${r.product_code}</td><td class="n">${kt(r.tonnes_on_hand)}</td>
+      <td class="n">${fmt(r.bm_fe)}</td><td class="n"><b>${fmt(r.recon_fe)}</b></td><td class="n">${fmt(r.recon_sio2)}</td><td class="n">${fmt(r.recon_al2o3)}</td>
+      <td><span class="pill toggle ${r.available ? "ON_SPEC" : "OFF_SPEC_LIKELY"}" title="${r.availability_reason || ""}" onclick="toggleSp('${r.stockpile_id}', ${!r.available})">${r.available ? "AVAILABLE" : "OUT OF SERVICE"}</span></td></tr>`).join("");
+}
+window.toggleSp = async (id, available) => {
+  const reason = available ? "Returned to service" : prompt(`Reason for taking ${id} out of service?`, "Reclaimer down for maintenance");
+  if (reason === null) return;
+  await post(`/api/stockpiles/${id}/availability`, { available, reason }); await loadStockpiles();
+};
+
+let convId = null;
+const SAMPLES = ["Which hub had the highest share of trains below typical Fe in October?",
+  "What is the average block model Fe error by hub over the last 30 days?",
+  "Show vessels loaded in October with Fe below typical and their penalty",
+  "How many trains are predicted off-spec right now?"];
+$("#chips").innerHTML = SAMPLES.map((s) => `<button type="button">${s}</button>`).join("");
+$("#chips").querySelectorAll("button").forEach((b) => (b.onclick = () => ask(b.textContent)));
+$("#askform").onsubmit = (e) => { e.preventDefault(); const v = $("#askq").value.trim(); if (v) ask(v); $("#askq").value = ""; };
+async function ask(q) {
+  const chat = $("#chat");
+  chat.insertAdjacentHTML("beforeend", `<div class="q">${q}</div>`);
+  const a = document.createElement("div"); a.className = "a"; a.textContent = "Genie is thinking…"; chat.appendChild(a); chat.scrollTop = 1e9;
+  try {
+    const r = await post("/api/genie", { question: q, conversation_id: convId });
+    convId = r.conversation_id;
+    let html = r.text ? `<div>${r.text.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")}</div>` : "";
+    if (r.interpretation && r.interpretation !== r.text) html = `<div class="muted" style="margin-bottom:4px">${r.interpretation}</div>` + html;
+    if (r.columns.length) html += `<table><tr>${r.columns.map((c) => `<th>${c}</th>`).join("")}</tr>${r.rows.slice(0, 15).map((row) => `<tr>${row.map((v) => `<td>${v === null ? "–" : isNaN(v) || v === "" ? v : Number(v).toLocaleString(undefined, { maximumFractionDigits: 3 })}</td>`).join("")}</tr>`).join("")}</table>`;
+    if (r.sql) html += `<details><summary>Generated SQL (governed by Unity Catalog)</summary><pre>${r.sql.replace(/</g, "&lt;")}</pre></details>`;
+    a.innerHTML = html || "No answer.";
+  } catch (e) { a.innerHTML = `<span class="err">${e.message}</span>`; }
+  chat.scrollTop = 1e9;
+}
+
+async function refresh() { await Promise.all([loadSummary(), loadRecs(), loadInflight(), loadStockpiles()]).catch((e) => ($("#asof").textContent = "Error: " + e.message)); }
+refresh();
+</script>
+</body>
+</html>
