@@ -66,8 +66,8 @@ Every number in the deck is traced to its source file in `evidence/RESULTS.md`.
 
 ## Deck
 
-`deck/fortescue_every_train_to_spec.pdf` (submission copy) and `deck/deck.md` (text export with speaker notes).
-Built from `deck/deck_spec.json`.
+`deck/fortescue_every_train_to_spec.pdf` (6-slide submission copy) and `deck/deck.md` (text export).
+Built from `deck/v2/deck.html` (HTML printed to PDF), using a real screenshot of the deployed app.
 
 ## Where to look first (evaluator guide)
 

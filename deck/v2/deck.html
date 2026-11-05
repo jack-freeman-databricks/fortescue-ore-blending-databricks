@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Every train to spec · Fortescue × Databricks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --lava: #FF3621; --navy: #0B2026; --oat: #F9F7F4; --oat-2: #EEEDE9; --white: #FFFFFF;
+    --text-2: #4A5568; --border: #C4CCD6; --teal: #1B5162; --teal-muted: #618794; --success: #00A972;
+    --sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif; --mono: 'DM Mono', ui-monospace, monospace;
+  }
+  @page { size: 1920px 1080px; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #d9d6d0; font-family: var(--sans); color: var(--navy); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .slide { width: 1920px; height: 1080px; background: var(--oat); position: relative; overflow: hidden;
+           padding: 96px 128px 112px; display: flex; flex-direction: column; page-break-after: always; break-after: page; margin: 0 auto 32px; }
+  @media print { html, body { background: var(--oat); } .slide { margin: 0; } }
+
+  .eyebrow { font: 500 22px/1 var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--teal-muted); margin-bottom: 24px; }
+  h1 { font-size: 150px; line-height: 1.02; font-weight: 700; letter-spacing: -0.035em; }
+  h2 { font-size: 60px; line-height: 1.08; font-weight: 700; letter-spacing: -0.025em; max-width: 1664px; }
+  .lede { font-size: 30px; line-height: 1.4; color: var(--text-2); max-width: 1180px; margin-top: 28px; }
+  .rule { width: 88px; height: 6px; background: var(--lava); margin-bottom: 40px; }
+
+  footer { position: absolute; left: 128px; right: 128px; bottom: 44px; display: flex; align-items: center; justify-content: space-between;
+           font: 400 18px/1 var(--mono); color: var(--teal-muted); }
+  .wordmark { font: 700 26px/1 var(--sans); letter-spacing: -0.02em; color: var(--navy); display: flex; align-items: center; gap: 10px; }
+  .wordmark i { width: 18px; height: 18px; background: var(--lava); display: inline-block; transform: rotate(45deg); }
+
+  /* ---- slide 1 ---- */
+  .s1 { justify-content: space-between; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px; border-top: 2px solid var(--navy); padding-top: 40px; }
+  .stat .v { font-size: 76px; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1; }
+  .stat .v small { font-size: 40px; font-weight: 500; color: var(--text-2); }
+  .stat .l { font-size: 26px; line-height: 1.35; color: var(--text-2); margin-top: 16px; max-width: 460px; }
+  .stat .v .arrow { color: var(--lava); font-weight: 500; }
+
+  /* ---- slide 2 ---- */
+  .chain { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0; margin-top: 64px; position: relative; }
+  .node { text-align: left; padding-right: 16px; }
+  .node .dot { width: 22px; height: 22px; border-radius: 50%; background: var(--navy); position: relative; z-index: 1; }
+  .node .name { font-size: 28px; font-weight: 700; margin-top: 20px; }
+  .node .note { font-size: 22px; line-height: 1.35; color: var(--text-2); margin-top: 8px; }
+  .node .note b { color: var(--navy); }
+  .chain::before { content: ""; position: absolute; left: 11px; right: calc(100% / 6 - 11px); top: 10px; height: 2px; background: var(--navy); }
+  .node.hot .dot { background: var(--lava); }
+  .lag { margin-top: 28px; margin-left: calc(100% / 6 * 2); width: calc(100% / 6 * 3); border: 2px dashed var(--teal-muted); border-top: none;
+         height: 28px; position: relative; }
+  .lag span { position: absolute; top: 40px; left: 0; font: 500 22px/1.3 var(--mono); color: var(--teal); }
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 96px; margin-top: auto; align-items: end; }
+  .bars h3, .panel h3 { font-size: 26px; font-weight: 700; margin-bottom: 24px; }
+  .bar-row { display: grid; grid-template-columns: 300px 1fr 90px; align-items: center; gap: 20px; margin-bottom: 16px; font-size: 24px; }
+  .bar-row .track { height: 30px; background: var(--oat-2); }
+  .bar-row .fill { height: 100%; background: var(--teal-muted); }
+  .bar-row.hot .fill { background: var(--lava); }
+  .bar-row .num { font-variant-numeric: tabular-nums; font-weight: 700; text-align: right; }
+  .callout { font-size: 34px; line-height: 1.35; font-weight: 500; }
+  .callout b { font-weight: 700; }
+  .callout .muted { color: var(--text-2); font-weight: 400; font-size: 26px; display: block; margin-top: 20px; }
+
+  /* ---- slide 3 ---- */
+  .s3-body { display: grid; grid-template-columns: 1.22fr 1fr; gap: 72px; margin-top: 48px; flex: 1; min-height: 0; }
+  .shot { border-radius: 12px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 20px 25px -5px rgba(0,0,0,.10); background: var(--white); }
+  .shot img { width: 100%; height: 100%; object-fit: cover; object-position: top left; display: block; }
+  .does { list-style: none; display: grid; gap: 26px; }
+  .does li { display: grid; grid-template-columns: 52px 1fr; gap: 16px; font-size: 27px; line-height: 1.35; }
+  .does li .n { font: 500 24px/1 var(--mono); color: var(--teal-muted); padding-top: 6px; }
+  .does li b { display: block; font-weight: 700; }
+  .does li span { color: var(--text-2); font-size: 23px; }
+  .stack { margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--border); }
+  .stack .lbl { font: 500 18px/1 var(--mono); text-transform: uppercase; letter-spacing: .04em; color: var(--teal-muted); margin-bottom: 16px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; }
+  .chip { font-size: 20px; padding: 8px 14px; border: 1px solid var(--border); border-radius: 999px; background: var(--white); }
+
+  /* ---- slide 4 ---- */
+  .s4-body { display: grid; grid-template-columns: 1fr 1fr; gap: 112px; margin-top: 112px; }
+  .cmp h3 { font-size: 34px; font-weight: 700; }
+  .cmp p.sub { font-size: 24px; color: var(--text-2); margin: 10px 0 48px; }
+  .cmp .row { display: grid; grid-template-columns: 300px 1fr 130px; gap: 24px; align-items: center; margin-bottom: 36px; font-size: 28px; }
+  .cmp .track { height: 72px; background: var(--oat-2); }
+  .cmp .fill { height: 100%; background: var(--teal-muted); }
+  .cmp .row.us .fill { background: var(--navy); }
+  .cmp .row.us { font-weight: 700; }
+  .cmp .num { font-variant-numeric: tabular-nums; text-align: right; font-weight: 700; font-size: 36px; }
+  .note-band { margin-top: auto; display: flex; gap: 64px; font-size: 24px; color: var(--text-2); border-top: 1px solid var(--border); padding-top: 28px; }
+  .note-band b { color: var(--navy); }
+
+  /* ---- slide 5 ---- */
+  .s5-body { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-top: 64px; flex: 1; }
+  .persona { padding: 48px 56px; }
+  .persona.exec { background: var(--navy); color: var(--white); border-radius: 12px 0 0 12px; }
+  .persona.dom { background: var(--white); border: 1px solid var(--border); border-left: none; border-radius: 0 12px 12px 0; }
+  .persona .who { font: 500 20px/1.3 var(--mono); text-transform: uppercase; letter-spacing: .04em; opacity: .7; }
+  .persona .big { font-size: 96px; font-weight: 700; letter-spacing: -0.03em; margin-top: 28px; line-height: 1; }
+  .persona .big-l { font-size: 26px; margin-top: 12px; opacity: .8; }
+  .persona ul { list-style: none; margin-top: 40px; display: grid; gap: 18px; }
+  .persona li { font-size: 26px; line-height: 1.35; padding-top: 18px; border-top: 1px solid rgba(196,204,214,.35); }
+  .persona.dom li { border-top-color: var(--oat-2); }
+  .persona li b { font-weight: 700; }
+  .fine { font-size: 19px; color: var(--text-2); margin-top: 24px; }
+
+  /* ---- slide 6 ---- */
+  .timeline { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 80px; border-top: 2px solid var(--navy); }
+  .phase { padding: 28px 32px 0 0; position: relative; }
+  .phase::before { content: ""; position: absolute; top: -12px; left: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--navy); }
+  .phase:last-child::before { background: var(--lava); }
+  .phase .wk { font: 500 22px/1 var(--mono); color: var(--teal-muted); margin-top: 12px; }
+  .phase .t { font-size: 32px; font-weight: 700; margin-top: 14px; }
+  .phase .d { font-size: 23px; line-height: 1.4; color: var(--text-2); margin-top: 10px; }
+  .ask { margin-top: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 96px; }
+  .ask h3 { font: 500 20px/1 var(--mono); text-transform: uppercase; letter-spacing: .04em; color: var(--teal-muted); margin-bottom: 20px; }
+  .ask ul { list-style: none; display: grid; gap: 14px; }
+  .ask li { font-size: 27px; line-height: 1.35; display: grid; grid-template-columns: 36px 1fr; }
+  .ask li::before { content: ""; width: 10px; height: 10px; background: var(--teal-muted); margin-top: 14px; }
+</style>
+</head>
+<body>
+
+<!-- 1 · Title + outcome -->
+<section class="slide s1">
+  <div>
+    <div class="eyebrow">Fortescue · Mine-to-port grade control</div>
+    <div class="rule"></div>
+    <h1>Every train to spec</h1>
+    <p class="lede">Know each train's lab grade when it leaves the load-out, and blend the next one on corrected stockpile grades.</p>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="v">73% <span class="arrow">→</span> &lt;5%</div><div class="l">Solomon trains below typical Fe, blending on lab-reconciled grade (simulated)</div></div>
+    <div class="stat"><div class="v">11% <span class="arrow">→</span> 71%</div><div class="l">below-typical trains flagged at departure, 24-48 h before the lab result</div></div>
+    <div class="stat"><div class="v">US$2.8M<small>/yr</small></div><div class="l">grade penalties avoided, planning case (US$5.6M/yr simulated upper bound)</div></div>
+  </div>
+  <footer><span>Synthetic data · illustrative penalty schedule</span><span class="wordmark"><i></i>databricks</span></footer>
+</section>
+
+<!-- 2 · Problem -->
+<section class="slide">
+  <div class="eyebrow">The problem</div>
+  <h2>Trains are blended on biased grades and checked 36 h later</h2>
+  <div class="chain">
+    <div class="node"><div class="dot"></div><div class="name">Pit</div><div class="note">Ore trucked to ROM</div></div>
+    <div class="node hot"><div class="dot"></div><div class="name">ROM stockpile</div><div class="note">Block model grade <b>over-states Fe</b> by up to 0.45%</div></div>
+    <div class="node hot"><div class="dot"></div><div class="name">Train load-out</div><div class="note">Controller picks the blend; cross-belt analyser <b>drifts</b></div></div>
+    <div class="node"><div class="dot"></div><div class="name">Rail</div><div class="note">~34.5 kt per train, ~15 trains a day</div></div>
+    <div class="node"><div class="dot"></div><div class="name">Herb Elliott Port</div><div class="note">Lab assay arrives; re-blend or rehandle</div></div>
+    <div class="node"><div class="dot"></div><div class="name">Vessel</div><div class="note">Off-spec cargo pays the penalty</div></div>
+  </div>
+  <div class="lag"><span>24-48 h between departure and the lab result</span></div>
+  <div class="split">
+    <div class="bars">
+      <h3>Trains below typical Fe, last 90 days</h3>
+      <div class="bar-row hot"><span>Solomon · Fortescue Blend</span><div class="track"><div class="fill" style="width:80.2%"></div></div><span class="num">80%</span></div>
+      <div class="bar-row hot"><span>Solomon · Kings Fines</span><div class="track"><div class="fill" style="width:72.3%"></div></div><span class="num">72%</span></div>
+      <div class="bar-row"><span>Cloudbreak</span><div class="track"><div class="fill" style="width:38.8%"></div></div><span class="num">39%</span></div>
+      <div class="bar-row"><span>Christmas Creek</span><div class="track"><div class="fill" style="width:13.6%"></div></div><span class="num">14%</span></div>
+      <div class="bar-row"><span>Eliwana</span><div class="track"><div class="fill" style="width:12.8%"></div></div><span class="num">13%</span></div>
+    </div>
+    <div class="callout">The bias is systematic, so it is correctable. <b>Solomon's block model reads 0.45% Fe high</b>; controllers trusting it under-deliver iron on most trains.
+      <span class="muted">Hubs with little bias over-deliver instead: iron given away that could have been sold.</span></div>
+  </div>
+  <footer><span>02</span><span class="wordmark"><i></i>databricks</span></footer>
+</section>
+
+<!-- 3 · Solution -->
+<section class="slide">
+  <div class="eyebrow">What changes</div>
+  <h2>One control room for every train, on governed data</h2>
+  <div class="s3-body">
+    <div class="shot"><img src="app_crop.png" alt="Blend Control Room showing today's recommended reclaim blends" /></div>
+    <div>
+      <ul class="does">
+        <li><span class="n">01</span><div><b>Predicted lab grade for every train in flight</b><span>ML model registered in Unity Catalog, scored each shift</span></div></li>
+        <li><span class="n">02</span><div><b>Recommended blend for every planned train</b><span>Optimiser on lab-reconciled grades, with an AI-written reason</span></div></li>
+        <li><span class="n">03</span><div><b>Approve, re-plan around an outage, or reject</b><span>Decisions written to Lakebase in milliseconds, with name and reason</span></div></li>
+        <li><span class="n">04</span><div><b>Ask questions in plain English</b><span>Genie answers from certified metrics, under the user's own access</span></div></li>
+      </ul>
+      <div class="stack"><div class="lbl">Built end to end on Databricks</div>
+        <div class="chips"><span class="chip">Lakeflow</span><span class="chip">Unity Catalog</span><span class="chip">MLflow</span><span class="chip">AI Functions</span><span class="chip">Lakebase</span><span class="chip">Genie</span><span class="chip">Databricks Apps</span></div>
+      </div>
+    </div>
+  </div>
+  <footer><span>03</span><span class="wordmark"><i></i>databricks</span></footer>
+</section>
+
+<!-- 4 · Proof -->
+<section class="slide">
+  <div class="eyebrow">Does it work</div>
+  <h2>The grade is known at departure, not after the lab</h2>
+  <div class="s4-body">
+    <div class="cmp">
+      <h3>Fe prediction error at departure</h3>
+      <p class="sub">Mean absolute error vs lab assay, % Fe. Lower is better.</p>
+      <div class="row"><span>Block model (today)</span><div class="track"><div class="fill" style="width:100%"></div></div><span class="num">0.249</span></div>
+      <div class="row"><span>Cross-belt analyser</span><div class="track"><div class="fill" style="width:69%"></div></div><span class="num">0.172</span></div>
+      <div class="row us"><span>Databricks model</span><div class="track"><div class="fill" style="width:44.6%"></div></div><span class="num">0.111</span></div>
+    </div>
+    <div class="cmp">
+      <h3>Below-typical trains caught at departure</h3>
+      <p class="sub">Share of 131 below-typical trains flagged. Higher is better.</p>
+      <div class="row"><span>Block model (today)</span><div class="track"><div class="fill" style="width:11%"></div></div><span class="num">11%</span></div>
+      <div class="row"><span>Cross-belt analyser</span><div class="track"><div class="fill" style="width:66%"></div></div><span class="num">66%</span></div>
+      <div class="row us"><span>Databricks model</span><div class="track"><div class="fill" style="width:71%"></div></div><span class="num">71%</span></div>
+    </div>
+  </div>
+  <div class="note-band">
+    <span><b>Held out:</b> last 21 days, 313 trains the model never saw</span>
+    <span><b>Precision:</b> 87%, fewer false alarms than the analyser</span>
+    <span><b>No look-ahead:</b> only lab results returned before departure</span>
+  </div>
+  <footer><span>04</span><span class="wordmark"><i></i>databricks</span></footer>
+</section>
+
+<!-- 5 · Value per persona -->
+<section class="slide">
+  <div class="eyebrow">What it is worth</div>
+  <h2>Revenue protected for planning, fewer surprises on shift</h2>
+  <div class="s5-body">
+    <div class="persona exec">
+      <div class="who">Executive sponsor · GM Integrated Planning &amp; Marketing</div>
+      <div class="big">US$2.8M/yr</div>
+      <div class="big-l">grade penalties avoided, planning case at 50% realisation</div>
+      <ul>
+        <li><b>Vessels below typical Fe:</b> 16 of 76 → 0 in the 30-day backtest</li>
+        <li><b>Trains below typical Fe:</b> 39% → 6%</li>
+        <li><b>One certified definition</b> of compliance for marketing, planning and the hubs</li>
+      </ul>
+    </div>
+    <div class="persona dom">
+      <div class="who">Domain owner · Superintendent Grade Control</div>
+      <div class="big">36 h → 0</div>
+      <div class="big-l">wait to know a train's grade, prediction at departure</div>
+      <ul>
+        <li><b>Re-plan in seconds</b> when a reclaimer goes down</li>
+        <li><b>Controllers stay in charge;</b> every override and reason is logged</li>
+        <li><b>Each hub sees its own trains;</b> penalty dollars only for commercial roles</li>
+      </ul>
+    </div>
+  </div>
+  <p class="fine">Simulated on 90 days of synthetic data with an illustrative penalty schedule. Trade-off: average train Fe rises 57.82% → 58.07%, so more high-grade ore is used at Solomon.</p>
+  <footer><span>05</span><span class="wordmark"><i></i>databricks</span></footer>
+</section>
+
+<!-- 6 · Pilot + ask -->
+<section class="slide">
+  <div class="eyebrow">Next step</div>
+  <h2>An 8-week pilot at Solomon, decided on value</h2>
+  <div class="timeline">
+    <div class="phase"><div class="wk">Weeks 1-2</div><div class="t">Connect</div><div class="d">LIMS, fleet management, analyser and rail feeds through Lakeflow Connect</div></div>
+    <div class="phase"><div class="wk">Weeks 3-4</div><div class="t">Calibrate</div><div class="d">Retrain on Fortescue history; agree contract penalty terms and certified KPIs</div></div>
+    <div class="phase"><div class="wk">Weeks 5-7</div><div class="t">Shadow</div><div class="d">Controllers see recommendations beside current practice; we measure the gap</div></div>
+    <div class="phase"><div class="wk">Week 8</div><div class="t">Decide</div><div class="d">Value review against the baseline; go or no-go for all four hubs</div></div>
+  </div>
+  <div class="ask">
+    <div><h3>Success looks like</h3><ul><li>Below-typical trains at Solomon halved</li><li>Prediction error under 0.15% Fe on Fortescue data</li><li>No extra controller effort per shift</li></ul></div>
+    <div><h3>We need from Fortescue</h3><ul><li>Solomon grade control as pilot owner</li><li>Read access to LIMS, FMS and analyser data</li><li>Marketing input on penalty terms</li></ul></div>
+  </div>
+  <footer><span>06</span><span class="wordmark"><i></i>databricks</span></footer>
+</section>
+
+</body>
+</html>
