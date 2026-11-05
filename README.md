@@ -4,6 +4,9 @@
 > Kings Fines) and hub names are Fortescue's public names. Specs, penalty schedule, tonnages and every number
 > in this repo are **illustrative**. No Fortescue data or customer content is used. Not an official Fortescue artefact.
 
+> **How it was built:** see [`BUILD_PROCESS.md`](BUILD_PROCESS.md) for the AI tools used (Claude Code with Databricks skills),
+> the stage-by-stage workflow, and eight concrete moments where AI changed the speed or quality of the build.
+
 ## The problem
 
 Fortescue sells iron ore to specification. Ore from four Pilbara mine hubs (Cloudbreak, Christmas Creek,
@@ -71,6 +74,7 @@ Built from `deck/v2/deck.html` (HTML printed to PDF), using a real screenshot of
 
 ## Where to look first (evaluator guide)
 
+0. `BUILD_PROCESS.md`: how the build was done with AI, separate from the design trade-offs
 1. `evidence/04_pipeline_outputs.log`: Lakeflow ran; row counts per layer, expectation pass/fail counts, business problem by hub
 2. `evidence/08_governance_and_lineage.log`: the same queries before/after narrowing entitlements (row filter + mask), tags, lineage
 3. `notebooks/01_train_grade_model.ipynb` and `notebooks/02_score_and_recommend.ipynb`: executed with outputs (model metrics, UC registration, recommendations, ai_query rationales, backtest)
