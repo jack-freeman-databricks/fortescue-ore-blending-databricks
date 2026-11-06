@@ -16,7 +16,7 @@
   html, body { background: #d9d6d0; font-family: var(--sans); color: var(--navy); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .slide { width: 1920px; height: 1080px; background: var(--oat); position: relative; overflow: hidden;
            padding: 96px 128px 112px; display: flex; flex-direction: column; page-break-after: always; break-after: page; margin: 0 auto 32px; }
-  @media print { html, body { background: var(--oat); } .slide { margin: 0; } }
+  @media print { html, body { background: var(--oat); } .slide { margin: 0; } .hint { display: none; } .slide:last-of-type { break-after: auto; page-break-after: auto; } }
 
   .eyebrow { font: 500 22px/1 var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--teal-muted); margin-bottom: 24px; }
   h1 { font-size: 150px; line-height: 1.02; font-weight: 700; letter-spacing: -0.035em; }
@@ -114,6 +114,15 @@
   .ask ul { list-style: none; display: grid; gap: 14px; }
   .ask li { font-size: 27px; line-height: 1.35; display: grid; grid-template-columns: 36px 1fr; }
   .ask li::before { content: ""; width: 10px; height: 10px; background: var(--teal-muted); margin-top: 14px; }
+
+  /* presentation mode (screen only): one slide at a time, scaled to the window */
+  @media screen {
+    html, body { height: 100%; overflow: hidden; background: #0B2026; }
+    .slide { position: absolute; top: 50%; left: 50%; margin: 0; transform-origin: center center;
+             transform: translate(-50%, -50%) scale(var(--fit, 1)); display: none; }
+    .slide.active { display: flex; }
+    .hint { position: fixed; right: 16px; bottom: 12px; font: 400 13px/1 var(--mono); color: #618794; z-index: 10; }
+  }
 </style>
 </head>
 <body>
@@ -258,5 +267,30 @@
   <footer><span>06</span><span class="wordmark"><i></i>databricks</span></footer>
 </section>
 
+
+<div class="hint" id="hint"></div>
+<script>
+(() => {
+  const slides = [...document.querySelectorAll('.slide')];
+  let i = Math.min(Math.max(parseInt(location.hash.slice(1) || '1', 10) - 1, 0), slides.length - 1);
+  const fit = () => document.documentElement.style.setProperty('--fit', Math.min(innerWidth / 1920, innerHeight / 1080));
+  const show = (n) => {
+    i = Math.min(Math.max(n, 0), slides.length - 1);
+    slides.forEach((s, k) => s.classList.toggle('active', k === i));
+    history.replaceState(null, '', '#' + (i + 1));
+    document.getElementById('hint').textContent = (i + 1) + ' / ' + slides.length + '   ← → · F full screen';
+  };
+  addEventListener('keydown', (e) => {
+    if (['ArrowRight', 'ArrowDown', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); show(i + 1); }
+    else if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); show(i - 1); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key.toLowerCase() === 'f') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
+  });
+  addEventListener('click', (e) => { if (e.target.closest('a')) return; show(e.clientX > innerWidth / 3 ? i + 1 : i - 1); });
+  addEventListener('resize', fit);
+  fit(); show(i);
+})();
+</script>
 </body>
 </html>
